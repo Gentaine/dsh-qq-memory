@@ -2,9 +2,9 @@
 // 对话表命令行：stats / list / search / export / cleanup。
 // 例：
 //   node scripts/qq-memory.mjs stats
-//   node scripts/qq-memory.mjs list --key group:123456789 --limit 20
+//   node scripts/qq-memory.mjs list --key group:939411971 --limit 20
 //   node scripts/qq-memory.mjs search --query 训练集 --limit 10
-//   node scripts/qq-memory.mjs export --format markdown --out ./exports/对话表.md
+//   node scripts/qq-memory.mjs export --format markdown --out D:\大肥鱼之家\data\qq-memory\导出.md
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -214,7 +214,10 @@ try {
     if (args.out) {
       const out = path.resolve(args.out)
       fs.mkdirSync(path.dirname(out), { recursive: true })
-      fs.writeFileSync(out, `${output}\n`, 'utf8')
+      // Excel 打开无 BOM 的 UTF-8 CSV 时，中文容易按系统 ANSI 解码成乱码。
+      // CSV 写文件默认加 UTF-8 BOM；管道输出不加，避免污染 shell 管道。
+      const bom = format === 'csv' && !args['no-bom'] ? '\uFEFF' : ''
+      fs.writeFileSync(out, `${bom}${output}\n`, 'utf8')
       console.log(`已导出 ${rows.length} 条到 ${out}`)
     } else {
       console.log(output)
