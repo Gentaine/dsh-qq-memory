@@ -1,0 +1,38 @@
+# 这个文件随插件一起被 DSH bundle loader 展开。
+# id 只是 loader entry 的名字；真正加载的模块是下面的 name（profile 的 node_modules 里）。
+- insert:
+    - id: qq-memory
+      name: dsh-qq-memory
+      config:
+        enabled: true
+        # qq-bridge 的 state 目录（social-v2.json / sessions.json 所在处）。
+        # 默认取 DSH 进程 cwd 下的 ./qq-bridge/state；不是这个布局时取消注释并改成绝对路径。
+        # bridgeStateDir: '/absolute/path/to/qq-bridge/state'
+        # 对话表落盘位置；默认 ~/.dsh/qq-memory/conversations.sqlite3，目录不存在会自动创建。
+        # databasePath: '/absolute/path/to/conversations.sqlite3'
+        # 只把 N 小时以前的消息当作“旧记忆”，避免和当前上下文重复
+        minAgeHours: 3
+        maxInjectedMessages: 8
+        maxInjectedChars: 1800
+        # 普通关键词命中：每 N 轮最多注入一次；“还记得/上次/昨晚”等意图不受此限
+        cooldownTurns: 5
+        memoryIntentCooldownTurns: 1
+        queryLookbackMinutes: 120
+        pollMs: 15000
+        timeZone: Asia/Shanghai
+        debug: false
+        # 定期清理：时间越久、被回忆越少、所在轮次越短 → 越先删。
+        # 只有单个会话超过 maxMessagesPerConversation 才触发；minAgeDays 与
+        # keepRecentTurns 是双重保护，不会刚聊完就被删。
+        cleanup:
+          enabled: true
+          intervalHours: 6
+          minAgeDays: 14
+          keepRecentTurns: 30
+          maxMessagesPerConversation: 5000
+          batchSize: 200
+          ageSaturationDays: 90
+          weights:
+            age: 0.5
+            recall: 0.3
+            turnLength: 0.2

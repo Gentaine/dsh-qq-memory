@@ -1,0 +1,44 @@
+{
+  "name": "dsh-qq-memory",
+  "version": "0.2.0",
+  "description": "QQ 桥接对话表：把 qq-bridge 的聊天记录写入 SQLite，在 DSH 每轮按需注入旧聊天记忆，并按时间/回忆次数/轮次长度定期清理",
+  "type": "module",
+  "main": "./lib/index.js",
+  "license": "MIT",
+  "author": "Gentaine",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "qq",
+    "qq-bridge",
+    "memory",
+    "sqlite"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gentaine/dsh-qq-memory.git"
+  },
+  "homepage": "https://github.com/Gentaine/dsh-qq-memory",
+  "bugs": {
+    "url": "https://github.com/Gentaine/dsh-qq-memory/issues"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "files": [
+    "lib/",
+    "scripts/",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test --test-isolation=none"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

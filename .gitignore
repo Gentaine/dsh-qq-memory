@@ -1,0 +1,8 @@
+node_modules/
+*.sqlite3
+*.sqlite3-*
+data/
+exports/
+backups/
+.DS_Store
+Thumbs.db
