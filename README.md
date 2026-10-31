@@ -258,6 +258,9 @@ node scripts/qq-memory.mjs list --db $db --limit 30
 
 `list` 和导出都带 `turn_no`（轮次）与 `recall_count`（被回忆次数）两列。
 
+CSV 写文件时默认加 UTF-8 BOM，Excel 直接打开不会把中文显示成乱码；管道输出默认不带 BOM，
+需要纯净 UTF-8 时加 `--no-bom`。
+
 ### 预览 / 执行清理
 
 ```powershell
