@@ -81,6 +81,52 @@ test('清理优先级：更老、更少被回忆、这一轮交流次数更少 �
   assert.ok(oldShort > newShort)
 })
 
+test('清理按对方消息数比较轮次，不把我刷屏的轮次当成高价值', () => {
+  const db = tmpDb()
+  const now = 1_800_000_000_000
+  const old = now - 100 * DAY
+  const rows = [
+    msg({ id: 'a-in', time: old + 1, text: 'a-in', direction: 'in' }),
+    ...Array.from({ length: 10 }, (_, i) => msg({
+      id: `a-out-${i}`,
+      time: old + 2 + i,
+      text: `a-out-${i}`,
+      direction: 'out',
+    })),
+    msg({ id: 'b-in-1', time: old + 20, text: 'b-in-1', direction: 'in' }),
+    msg({ id: 'b-in-2', time: old + 21, text: 'b-in-2', direction: 'in' }),
+    msg({ id: 'b-in-3', time: old + 22, text: 'b-in-3', direction: 'in' }),
+    msg({ id: 'b-out', time: old + 23, text: 'b-out', direction: 'out' }),
+  ]
+  db.store.upsertMany(rows)
+  const counts = db.store.turnExchangeCounts('group:1')
+  assert.equal(counts.get(1), 1) // A 轮：对方 1 条、我刷 10 条
+  assert.equal(counts.get(2), 3) // B 轮：对方 3 条、我 1 条
+
+  const engine = createEngine({
+    store: db.store,
+    bridge: {},
+    config: {
+      cleanup: {
+        enabled: true,
+        minAgeDays: 0,
+        keepRecentTurns: 0,
+        maxMessagesPerConversation: 14,
+        batchSize: 10,
+        ageSaturationDays: 90,
+      },
+    },
+    logger: { info() {}, warn() {} },
+  })
+  const result = engine.cleanup({ now })
+  assert.equal(result.deleted, 1)
+  const texts = db.store.list({ qqKey: 'group:1', limit: 20 }).map((row) => row.text)
+  // 旧实现会把 A 轮按 11 条算成长轮次；新实现按 1 次交流算，先删 A。
+  assert.ok(!texts.includes('a-in'))
+  assert.ok(texts.includes('b-in-1'))
+  db.close()
+})
+
 test('定期清理会删掉最老、最少被回忆、轮次最短的旧消息，保留高价值消息', () => {
   const db = tmpDb()
   const now = 1_800_000_000_000
