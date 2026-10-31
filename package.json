@@ -1,7 +1,7 @@
 {
   "name": "dsh-qq-memory",
-  "version": "0.2.0",
-  "description": "QQ 桥接对话表：把 qq-bridge 的聊天记录写入 SQLite，在 DSH 每轮按需注入旧聊天记忆，并按时间/回忆次数/轮次长度定期清理",
+  "version": "0.2.1",
+  "description": "QQ 桥接对话表：把 qq-bridge 的聊天记录写入 SQLite，在 DSH 每轮按需注入旧聊天记忆，并按时间/回忆次数/轮次交流次数定期清理",
   "type": "module",
   "main": "./lib/index.js",
   "license": "MIT",

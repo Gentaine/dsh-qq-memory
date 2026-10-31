@@ -50,12 +50,32 @@ test('轮次按“对方发起 → 我回应”递增；连续同方向不新增
   db.close()
 })
 
-test('清理优先级：更老、更少被回忆、所在轮次更短 → 更高', () => {
+test('交流次数只数对方消息，我连续刷屏不把轮次撑长', () => {
+  const db = tmpDb()
+  const base = 1_800_000_000_000
+  db.store.upsertMany([
+    msg({ id: 'e1', time: base + 1, text: '对方一', direction: 'in' }),
+    msg({ id: 'e2', time: base + 2, text: '我回一', direction: 'out' }),
+    msg({ id: 'e3', time: base + 3, text: '对方二', direction: 'in' }),
+    msg({ id: 'e4', time: base + 4, text: '对方三', direction: 'in' }),
+    msg({ id: 'e5', time: base + 5, text: '我回二', direction: 'out' }),
+    msg({ id: 'e6', time: base + 6, text: '我补三', direction: 'out' }),
+    msg({ id: 'e7', time: base + 7, text: '我补四', direction: 'out' }),
+    msg({ id: 'e8', time: base + 8, text: '对方四', direction: 'in' }),
+  ])
+  const counts = db.store.turnExchangeCounts('group:1')
+  assert.equal(counts.get(1), 1) // 对方一
+  assert.equal(counts.get(2), 2) // 对方二 + 对方三
+  assert.equal(counts.get(3), 1) // 对方四
+  db.close()
+})
+
+test('清理优先级：更老、更少被回忆、这一轮交流次数更少 → 更高', () => {
   const now = 1_800_000_000_000
-  const oldShort = cleanupPriority({ sentAt: now - 100 * DAY, recallCount: 0, turnSize: 1, now, ageSaturationDays: 90 })
-  const oldLong = cleanupPriority({ sentAt: now - 100 * DAY, recallCount: 0, turnSize: 20, now, ageSaturationDays: 90 })
-  const oldRecalled = cleanupPriority({ sentAt: now - 100 * DAY, recallCount: 100, turnSize: 1, now, ageSaturationDays: 90 })
-  const newShort = cleanupPriority({ sentAt: now - 1 * DAY, recallCount: 0, turnSize: 1, now, ageSaturationDays: 90 })
+  const oldShort = cleanupPriority({ sentAt: now - 100 * DAY, recallCount: 0, exchangeCount: 0, now, ageSaturationDays: 90 })
+  const oldLong = cleanupPriority({ sentAt: now - 100 * DAY, recallCount: 0, exchangeCount: 20, now, ageSaturationDays: 90 })
+  const oldRecalled = cleanupPriority({ sentAt: now - 100 * DAY, recallCount: 100, exchangeCount: 0, now, ageSaturationDays: 90 })
+  const newShort = cleanupPriority({ sentAt: now - 1 * DAY, recallCount: 0, exchangeCount: 0, now, ageSaturationDays: 90 })
   assert.ok(oldShort > oldLong)
   assert.ok(oldShort > oldRecalled)
   assert.ok(oldShort > newShort)

@@ -17,7 +17,7 @@
   `source.kind = "qq-table-memory"` 的上下文追加给模型。
 - **回忆计数**：消息真正进入 prompt 时 `recall_count + 1`。
 - **对话轮次**：按“对方发起 → 我回应”的规则给每条消息标 `turn_no`。
-- **定期清理**：按“时间越久、被回忆越少、所在轮次越短”的优先级删除旧消息。
+- **定期清理**：按“时间越久、被回忆越少、这一轮交流次数越少”的优先级删除旧消息。
 - **同会话隔离**：不会把 A 群的旧账带进 B 群或私聊。
 - **可导出**：`list`、`search`、Markdown / CSV / JSON 导出。
 - **可回填**：可选脚本从 DSH 会话日志里补更早的消息快照。
@@ -163,8 +163,8 @@ CREATE INDEX messages_cleanup ON messages (qq_key, turn_no, sent_at);
 - 当“上一条是我发的、下一条是对方发的”时，进入下一轮；
 - 连续几条对方消息算同一轮，我连续补充几句也算同一轮。
 
-所以一轮通常就是“对方发起 → 我回应”。这一轮里有多少条消息，就是清理规则里的
-“轮次长度”。
+所以一轮通常就是“对方发起 → 我回应”。清理规则里的“交流次数”只数这一轮里
+**对方发的消息条数**，不是总消息条数：我连续补很多句不会把这一轮撑成“高价值长讨论”。
 
 ### 回忆次数 `recall_count`
 
@@ -189,11 +189,11 @@ CREATE INDEX messages_cleanup ON messages (qq_key, turn_no, sent_at);
 ```text
 priority = ageScore * 0.5
          + recallScore * 0.3
-         + turnLengthScore * 0.2
+         + turnExchangeScore * 0.2
 
-ageScore        = min(1, 消息年龄天数 / ageSaturationDays)  // 越老越高
-recallScore     = 1 / (1 + recall_count)                    // 越少被回忆越高
-turnLengthScore = 1 / (1 + 这一轮的消息条数)                 // 轮次越短越高
+ageScore          = min(1, 消息年龄天数 / ageSaturationDays)  // 越老越高
+recallScore       = 1 / (1 + recall_count)                    // 越少被回忆越高
+turnExchangeScore = 1 / (1 + 这一轮里对方发的消息条数)        // 交流次数越少越高
 ```
 
 默认 `ageSaturationDays = 90`，权重为 `age=0.5, recall=0.3, turnLength=0.2`。
@@ -233,7 +233,7 @@ turnLengthScore = 1 / (1 + 这一轮的消息条数)                 // 轮次�
 | `cleanup.ageSaturationDays` | `90` | 年龄多少天后 `ageScore` 达到 1 |
 | `cleanup.weights.age` | `0.5` | 时间权重 |
 | `cleanup.weights.recall` | `0.3` | 被回忆次数权重 |
-| `cleanup.weights.turnLength` | `0.2` | 轮次长度权重 |
+| `cleanup.weights.turnLength` | `0.2` | 交流次数权重（只数对方消息） |
 
 改 `cordis.patch.yml` 后重启 DSH。
 

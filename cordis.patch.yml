@@ -21,7 +21,8 @@
         pollMs: 15000
         timeZone: Asia/Shanghai
         debug: false
-        # 定期清理：时间越久、被回忆越少、所在轮次越短 → 越先删。
+        # 定期清理：时间越久、被回忆越少、这一轮交流次数越少 → 越先删。
+        # 交流次数只数对方消息，我连续刷屏不会把轮次撑长。
         # 只有单个会话超过 maxMessagesPerConversation 才触发；minAgeDays 与
         # keepRecentTurns 是双重保护，不会刚聊完就被删。
         cleanup:
